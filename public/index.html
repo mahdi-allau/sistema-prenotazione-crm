@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Prenotazioni</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e5814f'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' font-weight='700' text-anchor='middle' fill='%231b2230'%3EP%3C/text%3E%3C/svg%3E">
+<style>
+:root{ /* tema scuro (predefinito): colori ispirati al gestionale di esempio */
+  --bg:#07090c;--panel:#10161d;--panel2:#171f29;--line:#263341;--ink:#f3ead8;--muted:#a7b1bc;
+  --area:#5b7592;--area-bg:#111a24;--svc:#6a4378;--svc-bg:#1a1323;--turn:#2f7a73;--turn-bg:#0e1d1e;--turn-t:#4fbcae;
+  --on-g:#f6efe0;--chip-off:#05070a;
+  --accent:#e5814f;--accent-d:#d36d3a;--accent-ink:#1b2230;
+  --input:#f1e8d8;--input-ink:#26303c;--ph:#7d8895;
+  --s-conf:#8fabcb;--s-here:#4fbcae;--s-done:#8c96a1;--s-bad:#e5685d;--s-late:#eaa83a;
+  --ok:#4fbcae;--bad:#e5685d;--warn:#eaa83a;--shadow:0 12px 32px rgba(0,0,0,.55);
+  --ui:Montserrat,"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Cormorant Garamond","Palatino Linotype",Palatino,Georgia,serif;
+}
+:root[data-theme=chiaro]{
+  --bg:#f3ecdb;--panel:#fffcf4;--panel2:#f6efdd;--line:#ddd0b0;--ink:#2a2220;--muted:#6b5f57;
+  --area:#4f6b8a;--area-bg:#e6ecf2;--svc:#6d3f7a;--svc-bg:#eee5f0;--turn:#2b6f68;--turn-bg:#e0eeeb;--turn-t:#23665f;
+  --on-g:#f6efe0;--chip-off:#fffcf4;
+  --accent:#e07a46;--accent-d:#c9662f;--accent-ink:#1b2230;
+  --input:#fffefb;--input-ink:#2a2220;--input-bd:#cdbf9b;--ph:#8a7f76;
+  --s-conf:#4f6b8a;--s-here:#23665f;--s-done:#8a7f76;--s-bad:#b3261e;--s-late:#a96a0a;
+  --ok:#23665f;--bad:#b3261e;--warn:#a96a0a;--shadow:0 10px 26px rgba(70,45,20,.18);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:dark;-webkit-text-size-adjust:100%}
+html[data-theme=chiaro]{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.45 var(--ui)}
+h1,h2,h3,h4{margin:0;font-family:var(--serif);font-weight:700}
+button{font-family:inherit}
+.muted{color:var(--muted)}.small{font-size:14px}
+.warnt{color:var(--warn);font-weight:700}
+
+/* barra in alto e menu */
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font:700 26px/1.1 var(--serif);letter-spacing:.06em;margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who{color:var(--muted);font-size:14px;white-space:nowrap}
+button.link{background:none;border:0;padding:8px 6px;font:600 14px var(--ui);text-decoration:underline;text-underline-offset:4px;cursor:pointer;color:var(--ink);min-height:40px;white-space:nowrap}
+nav.tabs{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;scrollbar-width:none;max-width:1100px;margin:0 auto}
+nav.tabs::-webkit-scrollbar{display:none}
+.pill{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:0 18px;min-height:46px;font:700 13px var(--ui);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill.cta{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+main{max-width:1100px;margin:0 auto;padding:6px 14px 130px}
+.ptitle{font-size:38px;text-align:center;margin:14px 0 4px}
+.lead{text-align:center;color:var(--muted);margin:4px 0 14px}
+.help{display:block;color:var(--muted);font-size:14px;margin-top:6px}
+.printtitle{display:none}
+
+/* pulsanti, campi, schede */
+.btn{font:700 16px var(--ui);display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;min-height:52px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--ink)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.main:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.btn.sm{min-height:44px;padding:8px 16px;font-size:14px}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn.big{min-width:260px;font-size:17px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,button.link:focus-visible,.pill:focus-visible,.chip:focus-visible,.tchip:focus-visible,.tile:focus-visible,.pk:focus-visible,.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 24px;margin:16px 0}
+.card h3.plain{font-size:28px;margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3.sec{font-size:28px;margin:30px 0 4px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3.sec:first-of-type{margin-top:0}
+h3.sec span{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:800 15px var(--ui)}
+label{display:block;margin:16px 0 6px;font:700 12px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+label.check{display:flex;align-items:center;gap:12px;font-size:17px;letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink);cursor:pointer}
+input,select,textarea{font:inherit;color:var(--input-ink);color-scheme:light;width:100%;padding:12px 14px;background:var(--input);border:2px solid var(--input-bd,transparent);border-radius:12px;min-height:52px}
+input::placeholder,textarea::placeholder{color:var(--ph)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+input[type=checkbox]{width:26px;height:26px;min-height:0;accent-color:var(--accent);padding:0;flex:0 0 auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+.stepper{display:flex;gap:8px}
+.stepper input{text-align:center;font:800 24px var(--ui)}
+.stepper .btn{flex:0 0 60px;padding:0;font-size:26px}
+.actions{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap}
+.hint{font-size:15px;color:var(--ok);margin-top:6px;min-height:1.3em}
+.msg{padding:14px 18px;margin:14px 0;border:1px solid;border-left-width:5px;border-radius:12px;background:var(--panel);font-size:17px}
+.msg.err{border-color:var(--bad);color:var(--bad)}
+.msg.ok{border-color:var(--ok);color:var(--ok)}
+.msg.warnmsg{border-color:var(--warn);color:var(--warn)}
+
+/* data */
+.datebar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:10px}
+.datebar .btn{flex:0 0 56px;padding:0;font:400 30px var(--serif)}
+.datetitle{text-align:center;min-width:0;flex:1;max-width:520px}
+.datetitle h2{font-size:clamp(28px,6vw,42px);text-transform:capitalize;line-height:1.1}
+.datetitle span{color:var(--muted);letter-spacing:.32em;font-size:14px}
+.datetools{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 22px;align-items:center;margin:8px 0}
+.datetools label{margin:0;display:flex;align-items:center;gap:10px}
+.datetools input{width:auto;min-height:44px;font-size:16px}
+
+/* filtri area / servizio / turno */
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.fgroup{--g:var(--area);--g-bg:var(--area-bg);flex:1 1 190px;min-width:0;background:var(--g-bg);border:1px solid var(--line);border-radius:24px;padding:8px}
+.fgroup.area{flex:1 1 100%}
+.fgroup.svc{--g:var(--svc);--g-bg:var(--svc-bg)}
+.fgroup.turn{--g:var(--turn);--g-bg:var(--turn-bg)}
+.fgroup h4{background:var(--g);color:var(--on-g);border-radius:14px;text-align:center;font:800 13px var(--ui);letter-spacing:.24em;text-transform:uppercase;padding:6px 8px;margin:0 0 8px}
+.fchips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex:1 1 72px;min-width:0;min-height:56px;border:0;border-radius:16px;background:var(--chip-off);color:var(--ink);font:800 clamp(12px,3.4vw,18px) var(--ui);text-transform:uppercase;cursor:pointer;padding:8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.on{background:var(--g);color:var(--on-g)}
+.chip small{font:800 .78em var(--ui);margin-left:6px;color:var(--turn-t)}
+.chip.on small{color:var(--on-g);opacity:.85}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:2px solid var(--area);margin:14px 0 0}
+.stat{padding:12px 4px;text-align:center;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font:800 clamp(26px,7vw,40px)/1.05 var(--ui)}
+.stat span{display:block;font-size:clamp(11px,2.9vw,14px);color:var(--muted)}
+.stat.free b{color:var(--turn-t)}
+.stat.late.on b{color:var(--warn)}
+.modebar{display:flex;justify-content:flex-end;margin:14px 0 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;color:var(--ink);padding:0 20px;min-height:44px;font:700 13px var(--ui);letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+
+/* elenco prenotazioni (tabella) */
+.rtable{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.rhead,.rrow{display:grid;grid-template-columns:84px minmax(0,1.5fr) 64px minmax(0,1.3fr) minmax(0,1.4fr) 160px;gap:6px 16px;align-items:start;padding:14px 18px}
+.rhead{padding:12px 18px 10px 23px;font:800 12px var(--ui);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.rrow{border-bottom:1px solid var(--line);border-left:5px solid var(--sc,var(--s-conf));grid-template-areas:"time name pax tab note st" "act act act act act act"}
+.rrow:last-child{border-bottom:0}
+.rrow.confermata{--sc:var(--s-conf)}.rrow.arrivato{--sc:var(--s-here)}.rrow.completata{--sc:var(--s-done)}
+.rrow.annullata,.rrow.no_show{--sc:var(--s-bad)}.rrow.late{--sc:var(--s-late)}
+.c-time{grid-area:time;font:700 32px/1 var(--serif);padding-top:2px}
+.c-name{grid-area:name;min-width:0}
+.c-name b{display:block;font-size:19px;line-height:1.25;overflow-wrap:anywhere}
+.c-pax{grid-area:pax;font-size:20px;font-weight:800}
+.c-pax .pl{display:none;font-size:15px;font-weight:600;color:var(--muted)}
+.c-tab{grid-area:tab}
+.c-note{grid-area:note;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
+.c-note em{font-style:normal;font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.c-st{grid-area:st}
+.c-act{grid-area:act;display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.rrow.annullata .c-name b,.rrow.no_show .c-name b{text-decoration:line-through;color:var(--muted)}
+.st{display:inline-flex;align-items:center;gap:7px;font:800 12px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--sc)}
+.st:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--sc);flex:0 0 auto}
+.tchip{border:2px solid var(--area);background:transparent;color:var(--ink);border-radius:12px;padding:4px 12px;font:800 15px var(--ui);cursor:pointer;min-height:40px;text-align:left}
+.tchip:hover{background:var(--area-bg)}
+.tchip.warn{border-color:var(--warn);color:var(--warn)}
+.empty{text-align:center;padding:56px 16px;color:var(--muted);font-size:22px}
+
+/* pianta dei tavoli */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:2px;text-align:left;min-height:122px;padding:14px;border-radius:18px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;min-width:0}
+.tile b{font:700 28px/1.1 var(--serif)}
+.tile .seats{font-size:13px;color:var(--muted)}
+.tile .who{margin-top:auto;font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .when{font-size:13px;color:var(--muted)}
+.tile.free{border-color:var(--turn)}
+.tile.free .who{color:var(--turn-t)}
+.tile.confermata{background:var(--area-bg);border-color:var(--area)}
+.tile.arrivato{background:var(--turn-bg);border-color:var(--turn)}
+.tile.completata{opacity:.6}
+.tile.late{border-color:var(--warn)}
+.tile.late .when{color:var(--warn);font-weight:700}
+
+/* scelta e unione dei tavoli */
+.tbox{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.tsum{font-size:17px;margin-bottom:10px}
+.row-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pkbody{max-height:max(150px,calc(100vh - 430px));overflow:auto;margin:8px -4px 0;padding:0 4px}
+.pk-area{margin:12px 0}
+.pk-area h4{font:800 12px var(--ui);letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px}
+.pk{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;min-height:64px;min-width:0}
+.pk b{font-size:17px}
+.pk small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk.on{background:var(--turn);border-color:var(--turn);color:var(--on-g)}
+.pk.on small{color:var(--on-g);opacity:.85}
+.pk:disabled{opacity:.4;cursor:not-allowed}
+.pksum{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--panel2);font-weight:600}
+
+/* orari */
+.slotgrp{margin:8px 0 14px}
+.slotttl{font:italic 700 22px var(--serif);color:var(--muted);margin-bottom:8px}
+.slots{display:flex;flex-wrap:wrap;gap:10px}
+.slots button{font:700 18px var(--ui);min-width:92px;min-height:52px;padding:8px 14px;border:2px solid var(--line);background:var(--panel2);border-radius:14px;cursor:pointer;color:var(--ink)}
+.slots button:hover:not(:disabled){border-color:var(--accent)}
+.slots button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.slots button:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+
+/* elenchi semplici (clienti, opinioni, messaggi) */
+.book{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.res{padding:16px 20px;border-bottom:1px solid var(--line);display:grid;gap:4px}
+.res:last-child{border-bottom:0}
+.rname{font-size:20px;font-weight:700}
+.rname .pax{font-weight:500;color:var(--muted);font-size:15px;margin-left:10px}
+.rmeta{color:var(--muted);font-size:15px}
+.rnote{font-size:16px}
+.rnote em{color:var(--muted);font-style:normal;font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-right:8px}
+.tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--turn-t);border:1px solid var(--turn);border-radius:999px;padding:1px 9px;margin-left:8px;white-space:nowrap}
+.stars{display:flex;gap:4px;margin:10px 0}
+.stars button{font-size:42px;line-height:1;background:none;border:0;color:var(--line);cursor:pointer;padding:2px 6px}
+.stars button.on{color:var(--warn)}
+.starsv{color:var(--warn);letter-spacing:.08em;white-space:nowrap}
+.starsv .off{color:var(--line)}
+.avg{text-align:center;padding:10px 0 4px}
+.avg b{font:800 64px/1 var(--ui);display:block}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th{font:800 12px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px;border-bottom:2px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.trow{display:grid;grid-template-columns:1.2fr 90px 1fr auto auto;gap:10px;align-items:center;margin:10px 0}
+.trow label{margin:0}
+.urow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.sub{font-size:22px;margin:22px 0 4px}
+
+/* finestre di dialogo */
+dialog.modal{border:1px solid var(--line);padding:0;background:var(--panel);color:var(--ink);border-radius:24px;max-width:min(640px,94vw);width:100%;box-shadow:var(--shadow)}
+dialog.modal::backdrop{background:rgba(0,0,0,.62)}
+dialog.modal form{padding:26px 26px 22px}
+.modal h3{font-size:32px;margin-bottom:8px}
+.mbtns{display:flex;flex-direction:row-reverse;justify-content:flex-start;gap:12px;margin-top:20px;flex-wrap:wrap}
+.merr{color:var(--bad);font-weight:700;min-height:1.4em;margin-top:8px}
+
+/* avviso di nuova prenotazione e barra in basso */
+#alert{position:fixed;left:0;right:0;top:0;z-index:50;display:none;background:var(--accent);color:var(--accent-ink);padding:14px 20px;text-align:center;font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#alert b{display:block;letter-spacing:.2em;text-transform:uppercase;font-size:12px}
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:12px;max-width:1100px;margin:0 auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.bottombar .search{flex:1 1 0;min-width:0;position:relative}
+.bottombar .search input{padding-left:48px;font-size:18px;min-height:58px;border-radius:18px}
+.bottombar .search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:22px;height:22px;stroke:var(--ph);fill:none;stroke-width:2.2;pointer-events:none}
+.bottombar .btn.main{flex:1.35 1 0;min-height:58px;border-radius:18px;font-size:15px;letter-spacing:.07em;text-transform:uppercase;box-shadow:0 10px 26px rgba(229,129,79,.3)}
+
+/* accesso */
+.login{max-width:480px;margin:0 auto;padding:48px 16px}
+.mast{text-align:center;padding:0 16px 14px}
+.mast h1{font-size:clamp(34px,8vw,52px);letter-spacing:.08em;text-transform:uppercase;line-height:1.1}
+.mast p{margin:8px 0 0;color:var(--muted);letter-spacing:.3em;text-transform:uppercase;font-size:13px}
+.rule{display:flex;align-items:center;gap:14px;max-width:340px;margin:0 auto 14px}
+.rule:before,.rule:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+.rule:after{background:linear-gradient(270deg,transparent,var(--accent))}
+.rule i{width:9px;height:9px;transform:rotate(45deg);border:1px solid var(--accent);background:var(--bg)}
+
+@media (min-width:900px){
+  .fgroup.area{flex:2 1 300px}
+}
+@media (max-width:899px){
+  .rhead{display:none}
+  .rrow{grid-template-columns:auto 1fr auto;grid-template-areas:"time name st" "time pax pax" "time tab tab" "note note note" "act act act"}
+  .c-pax .pl{display:inline}
+  .c-time{font-size:30px}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .grid2{grid-template-columns:1fr}
+  .card{padding:18px 16px}
+  .trow{grid-template-columns:1fr 90px}
+  .brand{font-size:22px}
+  .who{display:none}
+  .ptitle{font-size:32px}
+}
+@media print{
+  :root,:root[data-theme=chiaro]{--bg:#fff;--panel:#fff;--panel2:#fff;--line:#999;--ink:#000;--muted:#333;--area:#555;--area-bg:#fff;--s-conf:#555;--s-here:#000;--s-done:#555;--s-bad:#000;--s-late:#000;--warn:#000;--turn-t:#000}
+  body{background:#fff;font-size:12pt}
+  .noprint,.topbar,nav.tabs,#alert,.bottombar,button{display:none!important}
+  .printtitle{display:block;font:700 20pt var(--serif);color:#000;margin-bottom:10pt}
+  .rtable,.stats{border-color:#999;box-shadow:none}
+  .rrow{break-inside:avoid;border-left:0;padding:8pt 0}
+  .c-time{font-size:20pt;color:#000}
+  main{padding:0}
+}
+</style>
+</head>
+<body>
+<div id="alert" role="alert"></div>
+<div id="app"></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let me = null, view = 'oggi', viewDate = '', lastMax = null, flash = '', prefill = null, DAY = null;
+const F = {area: 0, svc: '', turn: 1, mode: 'elenco', q: '', all: false}; // filtri della schermata Prenotazioni
+const STATUS = {confermata:'Confermata', arrivato:'Arrivato', completata:'Completata', annullata:'Annullata', no_show:'Non presentato'};
+const SVC = {pranzo:'Pranzo', cena:'Cena'};
+const NOSERVER = 'Il sistema non risponde. Controlla che la finestra nera di avvio (avvia.bat) sia ancora aperta.';
+
+const getTheme = () => { try { return localStorage.getItem('tema') || 'scuro'; } catch { return 'scuro'; } };
+const setTheme = t => { document.documentElement.dataset.theme = t; try { localStorage.setItem('tema', t); } catch {} };
+setTheme(getTheme());
+
+async function api(method, url, body) {
+  let r;
+  try { r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined}); }
+  catch { throw new Error(NOSERVER); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && me) { me = null; render(); }
+  if (!r.ok) throw Object.assign(new Error(j.error || 'Errore'), {canForce: j.canForce, status: r.status});
+  return j;
+}
+const msg = (t, ok) => `<div class="msg ${ok ? 'ok' : 'err'}" role="${ok ? 'status' : 'alert'}">${esc(t)}</div>`;
+const fd = d => d.split('-').reverse().join('/');
+const addDays = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+const dayName = d => new Date(d + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
+const stars = n => '<span class="starsv">' + '★'.repeat(n) + '<span class="off">' + '★'.repeat(5 - n) + '</span></span>';
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const when = (s, o) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('it-IT', o); // il database salva in UTC: qui si mostra l'ora locale
+const DATE_FMT = {day: '2-digit', month: '2-digit', year: 'numeric'};
+const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const names = ts => ts.map(t => t.name).join(' + ');
+const seatsOf = ts => ts.reduce((a, t) => a + t.seats, 0);
+// servizio (pranzo/cena) e turno (1/2) si ricavano dall'orario; turno 0 = il servizio non ha un secondo turno
+const svcOf = t => t < me.cfg.split ? 'pranzo' : 'cena';
+const turnOf = t => { const s = me.cfg.turn2[svcOf(t)]; return s ? (t >= s ? 2 : 1) : 0; };
+const lateMin = r => r.status === 'confermata' && r.date === me.today ? toMin(nowHM()) - toMin(r.time) : 0;
+const isLate = r => lateMin(r) > me.cfg.late;
+const isOut = r => ['annullata', 'no_show'].includes(r.status);
+
+/* finestra di dialogo elegante al posto dei popup del browser */
+function modal({title, body = '', ok = 'Conferma', cancel = 'Annulla', onOpen, validate}) {
+  return new Promise(resolve => {
+    const d = document.createElement('dialog');
+    d.className = 'modal';
+    d.innerHTML = `<form><h3>${esc(title)}</h3><div>${body}</div><div class="merr" role="alert"></div>
+      <div class="mbtns">${ok ? `<button type="submit" class="btn main">${esc(ok)}</button>` : ''}${cancel ? `<button type="button" class="btn" data-no>${esc(cancel)}</button>` : ''}</div></form>`;
+    document.body.append(d);
+    const finish = yes => { d.close(); resolve({ok: yes, el: d}); setTimeout(() => d.remove(), 50); };
+    d.querySelector('form').onsubmit = ev => { // Invio o pulsante di conferma
+      ev.preventDefault();
+      const err = validate && validate(d);
+      if (err) d.querySelector('.merr').textContent = err; else finish(true);
+    };
+    const no = d.querySelector('[data-no]');
+    if (no) no.onclick = () => finish(false);
+    d.addEventListener('cancel', ev => { ev.preventDefault(); finish(false); }); // tasto Esc
+    d.showModal();
+    if (onOpen) onOpen(d);
+  });
+}
+const warnDialog = (text, ok = 'Salva lo stesso') => modal({title: 'Attenzione', body: `<p>${esc(text)}</p><p>Vuoi continuare?</p>`, ok, cancel: 'Torna indietro'});
+
+async function boot() {
+  try { me = await api('GET', '/api/me'); viewDate = me.today; } catch { me = null; }
+  render();
+}
+
+const VIEWS = {};
+async function show(fn) {
+  try { await fn(); }
+  catch (e) { const m = $('#main'); if (m) m.innerHTML = msg(e.message); }
+}
+const refresh = () => show(VIEWS[view]);
+
+function render() {
+  if (!me) return renderLogin();
+  document.title = `${me.restaurant} · Prenotazioni`;
+  const tabs = [['oggi', 'Prenotazioni'], ['nuova', '+ Nuova', 'cta'], ['clienti', 'Clienti'], ['feedback', 'Opinioni'], ['offerte', 'Offerte & Eventi'], ['messaggi', 'Messaggi']];
+  if (me.role === 'admin') tabs.push(['impostazioni', 'Impostazioni']);
+  $('#app').innerHTML = `
+    <div class="topbar noprint"><div class="brand">${esc(me.restaurant)}</div><span class="who">${esc(me.name)}</span>
+      <button class="link" id="tema">${getTheme() === 'chiaro' ? 'Tema scuro' : 'Tema chiaro'}</button><button class="link" id="out">Esci</button></div>
+    <nav class="tabs noprint">${tabs.map(([k, l, c]) => `<button class="pill ${c || ''} ${view === k ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</nav>
+    <main id="main"></main>`;
+  $('#tema').onclick = () => { setTheme(getTheme() === 'chiaro' ? 'scuro' : 'chiaro'); $('#tema').textContent = getTheme() === 'chiaro' ? 'Tema scuro' : 'Tema chiaro'; };
+  $('#out').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} me = null; render(); };
+  document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => { view = b.dataset.v; flash = ''; render(); });
+  refresh();
+}
+
+async function renderLogin() {
+  $('#app').innerHTML = `<div class="login"><header class="mast"><div class="rule"><i></i></div><h1 id="rn">Prenotazioni</h1><p>Accesso riservato al personale</p></header>
+    <form class="card" id="lf"><div id="e"></div>
+      <label for="u">Utente</label><input id="u" autocomplete="username" autocapitalize="off" spellcheck="false">
+      <label for="p">Password</label><input id="p" type="password" autocomplete="current-password">
+      <label class="check"><input type="checkbox" id="sp"> Mostra la password</label>
+      <div class="actions"><button type="submit" class="btn main big" id="go" style="width:100%">Accedi</button></div></form></div>`;
+  $('#lf').onsubmit = async ev => { // il modulo gestisce da solo Invio e Tab: nessun tasto va intercettato
+    ev.preventDefault();
+    try { await api('POST', '/api/login', {username: $('#u').value, password: $('#p').value}); await boot(); }
+    catch (e) { $('#e').innerHTML = msg(e.message); }
+  };
+  $('#sp').onchange = e => { $('#p').type = e.target.checked ? 'text' : 'password'; };
+  $('#u').focus();
+  try { const i = await api('GET', '/api/info'); $('#rn').textContent = i.restaurant; document.title = i.restaurant; }
+  catch (e) { $('#e').innerHTML = msg(e.message); }
+}
+
+/* ---------- Prenotazioni del giorno: filtri, tabella e pianta dei tavoli ---------- */
+VIEWS.oggi = async function () {
+  const [list, tables, areas] = await Promise.all([api('GET', '/api/reservations?date=' + viewDate), api('GET', '/api/tables'), api('GET', '/api/areas')]);
+  DAY = {list, areas, tables: tables.filter(t => t.active)};
+  if (!areas.some(a => a.id === F.area)) F.area = areas.length ? areas[0].id : 0;
+  if (!F.svc) { const n = nowHM(); F.svc = svcOf(n); F.turn = turnOf(n); }
+  const typing = document.activeElement && document.activeElement.id === 'q';
+  $('#main').innerHTML = `
+    <div class="datebar noprint"><button class="btn" id="prev" aria-label="Giorno precedente">‹</button>
+      <div class="datetitle"><h2>${dayName(viewDate)}</h2><span>${viewDate.slice(0, 4)}</span></div>
+      <button class="btn" id="next" aria-label="Giorno successivo">›</button></div>
+    <div class="datetools noprint"><button class="link" id="today">Torna a oggi</button>
+      <label>Vai al giorno <input type="date" id="jump" value="${viewDate}"></label>
+      <button class="btn sm" id="print">Stampa l'elenco</button></div>
+    <div class="printtitle">${esc(me.restaurant)} — prenotazioni di ${dayName(viewDate)} ${viewDate.slice(0, 4)}</div>
+    ${flash}
+    <div class="filters noprint" id="filters"></div>
+    <div class="stats" id="stats"></div>
+    <div class="modebar noprint"><div class="seg"><button data-mode="elenco">Elenco</button><button data-mode="tavoli">Tavoli</button></div></div>
+    <div id="listbox"></div>
+    <div class="bottombar noprint"><div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Cerca" aria-label="Cerca nella giornata" autocomplete="off" value="${esc(F.q)}"></div>
+      <button class="btn main" id="newres">+ Nuova prenotazione</button></div>`;
+  flash = '';
+  $('#prev').onclick = () => { viewDate = addDays(viewDate, -1); refresh(); };
+  $('#next').onclick = () => { viewDate = addDays(viewDate, 1); refresh(); };
+  $('#today').onclick = () => { viewDate = me.today; refresh(); };
+  $('#jump').onchange = e => { if (e.target.value) { viewDate = e.target.value; refresh(); } };
+  $('#print').onclick = () => { F.all = true; paint(); window.print(); F.all = false; paint(); };
+  $('#newres').onclick = () => { view = 'nuova'; render(); };
+  $('#q').oninput = e => { F.q = e.target.value; paint(); };
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { F.mode = b.dataset.mode; paint(); });
+  paint();
+  if (typing) { const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+};
+
+const inScope = r => svcOf(r.time) === F.svc && turnOf(r.time) === F.turn && (!r.tables.length || r.tables.some(t => t.area_id === F.area));
+
+function paint() {
+  if (!me.cfg.turn2[F.svc]) F.turn = 0; else if (!F.turn) F.turn = 1;
+  const scoped = DAY.list.filter(inScope);
+  paintFilters(); paintStats(scoped);
+  document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === F.mode));
+  const q = F.q.trim().toLowerCase(), searching = !!q || F.all;
+  const rows = F.all ? DAY.list : q ? DAY.list.filter(r => `${r.cname} ${r.cphone} ${r.notes} ${r.cnotes} ${names(r.tables)}`.toLowerCase().includes(q)) : scoped;
+  $('#listbox').innerHTML = !searching && F.mode === 'tavoli' ? tilesHtml(scoped) : listHtml(rows, q && !F.all);
+  document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => act(DAY.list.find(r => r.id == b.dataset.id), b.dataset.act));
+  document.querySelectorAll('[data-res]').forEach(b => b.onclick = () => openRes(DAY.list.find(r => r.id == b.dataset.res)));
+  document.querySelectorAll('[data-free]').forEach(b => b.onclick = () => { prefill = {tableIds: [+b.dataset.free]}; view = 'nuova'; render(); });
+}
+function paintFilters() {
+  const count = a => DAY.tables.filter(t => t.area_id === a.id).length, hasTurns = !!me.cfg.turn2[F.svc];
+  $('#filters').innerHTML = `
+    <div class="fgroup area"><h4>Area</h4><div class="fchips">${DAY.areas.map(a => `<button class="chip ${F.area === a.id ? 'on' : ''}" data-area="${a.id}">${esc(a.name)}<small>${count(a)}</small></button>`).join('')}</div></div>
+    <div class="fgroup svc"><h4>Servizio</h4><div class="fchips">${['pranzo', 'cena'].map(s => `<button class="chip ${F.svc === s ? 'on' : ''}" data-svc="${s}">${SVC[s]}</button>`).join('')}</div></div>
+    ${hasTurns ? `<div class="fgroup turn"><h4>Turno</h4><div class="fchips">${[1, 2].map(n => `<button class="chip ${F.turn === n ? 'on' : ''}" data-turn="${n}">${n}° turno</button>`).join('')}</div></div>` : ''}`;
+  document.querySelectorAll('[data-area]').forEach(b => b.onclick = () => { F.area = +b.dataset.area; paint(); });
+  document.querySelectorAll('[data-svc]').forEach(b => b.onclick = () => { F.svc = b.dataset.svc; F.turn = me.cfg.turn2[F.svc] ? (F.turn || 1) : 0; paint(); });
+  document.querySelectorAll('[data-turn]').forEach(b => b.onclick = () => { F.turn = +b.dataset.turn; paint(); });
+}
+function paintStats(scoped) {
+  const live = scoped.filter(r => !isOut(r)), used = new Set();
+  live.forEach(r => r.tables.forEach(t => { if (t.area_id === F.area) used.add(t.id); }));
+  const total = DAY.tables.filter(t => t.area_id === F.area).length, late = live.filter(isLate).length;
+  $('#stats').innerHTML = `<div class="stat"><b>${used.size}</b><span>Tavoli occupati</span></div><div class="stat free"><b>${Math.max(0, total - used.size)}</b><span>Tavoli liberi</span></div>
+    <div class="stat"><b>${live.reduce((a, r) => a + r.people, 0)}</b><span>Coperti prenotati</span></div><div class="stat late ${late ? 'on' : ''}"><b>${late}</b><span>In ritardo</span></div>`;
+}
+function listHtml(rows, searching) {
+  if (!rows.length) return `<div class="rtable"><div class="empty">${searching ? 'Nessun risultato' : 'Nessuna prenotazione'}</div></div>`;
+  const open = rows.filter(r => !r.tables.length && !isOut(r)).length;
+  return (searching ? '<p class="muted small">Risultati in tutta la giornata</p>' : '')
+    + (open ? `<div class="msg warnmsg noprint">${plural(open, 'prenotazione senza tavolo', 'prenotazioni senza tavolo')}: tocca «Assegna tavolo» per sceglierlo.</div>` : '')
+    + `<div class="rtable"><div class="rhead"><span>Ora</span><span>Cliente</span><span>Pers.</span><span>Tavolo</span><span>Note</span><span>Stato</span></div>${rows.map(rowHtml).join('')}</div>`;
+}
+function rowHtml(r) {
+  const late = isLate(r), seats = seatsOf(r.tables);
+  const tcell = r.tables.length
+    ? `<button class="tchip ${seats < r.people ? 'warn' : ''}" data-id="${r.id}" data-act="tavolo" title="Cambia o unisci i tavoli">${esc(names(r.tables))}</button><div class="muted small">${r.tables.length > 1 ? 'uniti · ' : ''}${seats} posti</div>`
+    : `<button class="tchip warn" data-id="${r.id}" data-act="tavolo">Assegna tavolo</button>`;
+  return `<article class="rrow ${late ? 'late' : r.status}">
+    <div class="c-time">${r.time}</div>
+    <div class="c-name"><b>${esc(r.cname)}</b><span class="muted small">${esc(r.cphone)}</span></div>
+    <div class="c-pax">${r.people}<span class="pl"> ${r.people === 1 ? 'persona' : 'persone'}</span></div>
+    <div class="c-tab">${tcell}</div>
+    <div class="c-note">${r.notes ? esc(r.notes) : ''}${r.cnotes ? `<div><em>Cliente</em>${esc(r.cnotes)}</div>` : ''}</div>
+    <div class="c-st"><span class="st">${late ? `In ritardo · ${lateMin(r)} min` : STATUS[r.status]}</span></div>
+    <div class="c-act noprint">${actions(r)}</div></article>`;
+}
+function actions(r) {
+  const b = (a, l, c = '') => `<button class="btn sm ${c}" data-id="${r.id}" data-act="${a}">${l}</button>`;
+  if (r.status === 'confermata') return b('arrivato', 'Segna arrivato', 'main') + b('tavolo', 'Cambia tavolo') + b('modifica', 'Modifica') + b('annullata', 'Annulla', 'danger') + b('no_show', 'Non presentato', 'danger');
+  if (r.status === 'arrivato') return b('completata', 'Ha finito: chiedi il voto', 'main') + b('tavolo', 'Cambia tavolo');
+  if (r.status === 'completata') return b('voto', 'Inserisci il voto del cliente');
+  return b('confermata', 'Riattiva');
+}
+function tilesHtml(scoped) {
+  const tables = DAY.tables.filter(t => t.area_id === F.area);
+  if (!tables.length) return '<div class="rtable"><div class="empty">Nessun tavolo in quest\'area</div></div>';
+  return `<div class="tiles">${tables.map(t => {
+    const r = scoped.find(x => !isOut(x) && x.tables.some(y => y.id === t.id));
+    if (!r) return `<button class="tile free" data-free="${t.id}"><b>${esc(t.name)}</b><span class="seats">${t.seats} posti</span><span class="who">Libero</span><span class="when">tocca per prenotare</span></button>`;
+    return `<button class="tile ${isLate(r) ? 'late' : r.status}" data-res="${r.id}"><b>${esc(t.name)}</b><span class="seats">${t.seats} posti${r.tables.length > 1 ? ' · uniti' : ''}</span><span class="who">${esc(r.cname)}</span><span class="when">${r.time} · ${plural(r.people, 'persona', 'persone')}${isLate(r) ? ' · in ritardo' : ''}</span></button>`;
+  }).join('')}</div>`;
+}
+async function openRes(r) { // dalla pianta dei tavoli: dettagli e azioni della prenotazione
+  await modal({title: r.cname, ok: null, cancel: 'Chiudi',
+    body: `<p>${r.time} · ${plural(r.people, 'persona', 'persone')} · ${r.tables.length ? esc(names(r.tables)) : 'senza tavolo'}<br><span class="muted">${esc(r.cphone)}</span></p>${r.notes ? `<p>${esc(r.notes)}</p>` : ''}<div class="row-actions">${actions(r)}</div>`,
+    onOpen: d => d.querySelectorAll('[data-act]').forEach(b => b.onclick = () => { d.querySelector('[data-no]').click(); act(r, b.dataset.act); })});
+}
+
+async function act(r, a) {
+  try {
+    if (a === 'voto') await rateDialog(r);
+    else if (a === 'modifica') await editRes(r);
+    else if (a === 'tavolo') await changeTables(r);
+    else if (a === 'annullata' || a === 'no_show') {
+      const q = await modal({title: a === 'annullata' ? 'Annullare la prenotazione?' : 'Il cliente non si è presentato?',
+        body: `<p><b>${esc(r.cname)}</b><br>${plural(r.people, 'persona', 'persone')} alle ${r.time}</p>`, ok: 'Sì, conferma', cancel: 'No, torna indietro'});
+      if (!q.ok) return;
+      await api('PATCH', '/api/reservations/' + r.id, {status: a});
+    } else {
+      try { await api('PATCH', '/api/reservations/' + r.id, {status: a}); }
+      catch (e) { // riattivando, i tavoli potrebbero essere stati occupati nel frattempo
+        if (!e.canForce || !(await warnDialog(e.message + '. La prenotazione resterà senza tavolo.')).ok) throw e;
+        await api('PATCH', '/api/reservations/' + r.id, {status: a, force: true});
+      }
+    }
+  } catch (e) { flash = msg(e.message); }
+  refresh();
+}
+async function rateDialog(r) {
+  let val = 0;
+  const res = await modal({title: 'Voto del cliente', ok: 'Salva il voto',
+    body: `<p>${esc(r.cname)}</p><div class="stars" id="rs">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-v="${i}" aria-label="${i} su 5">★</button>`).join('')}</div>
+      <label for="rc">Commento (facoltativo)</label><textarea id="rc" rows="2"></textarea>`,
+    onOpen: d => d.querySelectorAll('#rs button').forEach(b => b.onclick = () => { val = +b.dataset.v; d.querySelectorAll('#rs button').forEach((x, i) => x.classList.toggle('on', i < val)); }),
+    validate: () => val ? '' : 'Tocca le stelle per scegliere da 1 a 5'});
+  if (!res.ok) return;
+  await api('POST', '/api/feedback', {reservation_id: r.id, rating: val, comment: res.el.querySelector('#rc').value});
+  flash = msg('Voto salvato', true);
+}
+async function editRes(r) {
+  const res = await modal({title: 'Modifica prenotazione', ok: 'Salva le modifiche',
+    body: `<p><b>${esc(r.cname)}</b></p><div class="grid2"><div><label for="ed">Data</label><input type="date" id="ed" min="${me.today}" value="${r.date}"></div>
+      <div><label for="ep">Persone</label><input type="number" id="ep" min="1" value="${r.people}"></div></div>
+      <label for="et">Orario</label><select id="et"></select><label for="en">Note</label><textarea id="en" rows="2">${esc(r.notes)}</textarea>`,
+    onOpen: d => {
+      const fill = async () => {
+        const date = d.querySelector('#ed').value, sel = d.querySelector('#et'), cur = sel.value || r.time;
+        try {
+          const s = await api('GET', `/api/slots?date=${date}&people=${d.querySelector('#ep').value || 1}&exclude=${r.id}`);
+          if (!s.some(x => x.time === r.time)) s.unshift({time: r.time, free: true});
+          sel.innerHTML = s.map(x => `<option value="${x.time}" ${x.time === cur ? 'selected' : ''} ${x.free || (x.time === r.time && date === r.date) ? '' : 'disabled'}>${x.time}${x.free ? '' : ' (occupato)'}</option>`).join('');
+        } catch (e) { d.querySelector('.merr').textContent = e.message; }
+      };
+      d.querySelector('#ed').onchange = d.querySelector('#ep').onchange = fill;
+      fill();
+    }});
+  if (!res.ok) return;
+  const g = s => res.el.querySelector(s).value;
+  const body = {date: g('#ed'), time: g('#et'), people: Number(g('#ep')), notes: g('#en')};
+  try { await api('PATCH', '/api/reservations/' + r.id, body); flash = msg('Prenotazione modificata', true); }
+  catch (e) {
+    if (!e.canForce) throw e;
+    if ((await warnDialog(e.message + '. Resterà senza tavolo.')).ok) { await api('PATCH', '/api/reservations/' + r.id, {...body, force: true}); flash = msg('Prenotazione modificata (senza tavolo)', true); }
+  }
+}
+
+/* scelta e unione dei tavoli: si toccano uno o più tavoli liberi a quell'ora */
+async function tablePicker({date, time, people, selected = [], exclude = 0, title = 'Scegli i tavoli'}) {
+  const st = await api('GET', `/api/tables/status?date=${date}&time=${time}&exclude=${exclude}`);
+  const sel = new Set(selected.filter(id => st.some(t => t.id === id && !t.busy)));
+  const groups = [];
+  for (const t of st) { let g = groups.find(x => x.id === t.area_id); if (!g) groups.push(g = {id: t.area_id, name: t.area_name || 'Senza area', tables: []}); g.tables.push(t); }
+  const body = `<p class="muted small">Tocca più tavoli per unirli. I tavoli occupati a quest'ora non si possono scegliere.</p>
+    <div class="pkbody">${groups.map(g => `<div class="pk-area"><h4>${esc(g.name)}</h4><div class="pk-grid">${g.tables.map(t =>
+      `<button type="button" class="pk ${sel.has(t.id) ? 'on' : ''}" data-t="${t.id}" ${t.busy ? 'disabled' : ''}><b>${esc(t.name)}</b><small>${t.seats} posti${t.busy ? ' · ' + esc(t.busy.name) : ''}</small></button>`).join('')}</div></div>`).join('')}</div>
+    <div class="pksum" id="pks"></div>`;
+  const res = await modal({title, body, ok: 'Conferma i tavoli', cancel: 'Annulla', onOpen: d => {
+    const upd = () => {
+      const ts = st.filter(t => sel.has(t.id)), seats = seatsOf(ts);
+      d.querySelector('#pks').innerHTML = ts.length ? `${esc(names(ts))} · <b>${seats} posti</b> per ${plural(people, 'persona', 'persone')}${seats < people ? ' <span class="warnt">· non bastano</span>' : ''}` : `Nessun tavolo scelto (${plural(people, 'persona', 'persone')})`;
+    };
+    d.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { const id = +b.dataset.t; if (sel.has(id)) sel.delete(id); else sel.add(id); b.classList.toggle('on', sel.has(id)); upd(); });
+    upd();
+  }});
+  return res.ok ? st.filter(t => sel.has(t.id)).map(t => t.id) : null;
+}
+async function changeTables(r) {
+  const ids = await tablePicker({date: r.date, time: r.time, people: r.people, selected: r.tables.map(t => t.id), exclude: r.id, title: 'Tavolo di ' + r.cname});
+  if (!ids) return;
+  let out;
+  try { out = await api('PATCH', '/api/reservations/' + r.id, {table_ids: ids}); }
+  catch (e) {
+    if (!e.canForce || !(await warnDialog(e.message)).ok) { if (!e.canForce) throw e; return; }
+    out = await api('PATCH', '/api/reservations/' + r.id, {table_ids: ids, force: true});
+  }
+  flash = msg(out.tables.length ? 'Tavolo: ' + names(out.tables) : 'Tavolo tolto: lo assegnerai dopo', true);
+}
+
+/* ---------- Nuova prenotazione ---------- */
+VIEWS.nuova = async function () {
+  const tables = await api('GET', '/api/tables');
+  let time = '', date = viewDate >= me.today ? viewDate : me.today, chosen = null, auto = null; // chosen: null = assegnazione automatica, altrimenti elenco di id scelti a mano
+  const pf = prefill; prefill = null;
+  if (pf && pf.tableIds) chosen = pf.tableIds;
+  const people = () => Math.max(1, Number($('#ppl').value) || 1);
+  $('#main').innerHTML = `<h2 class="ptitle">Nuova prenotazione</h2><p class="lead">Compila i dati mentre il cliente è al telefono</p><div id="e">${flash}</div>
+    <section class="card">
+      <h3 class="sec"><span>1</span> Il cliente</h3>
+      <label for="phone">Telefono</label><input id="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="es. 333 123 4567" value="${esc(pf && pf.phone || '')}">
+      <div id="known" class="hint"></div>
+      <label for="name">Nome e cognome</label><input id="name" autocomplete="off" value="${esc(pf && pf.name || '')}">
+      <h3 class="sec" style="margin-top:34px"><span>2</span> Quando e quanti</h3>
+      <div class="grid2"><div><label for="date">Data</label><input id="date" type="date" min="${me.today}" value="${date}"></div>
+        <div><label for="ppl">Persone</label><div class="stepper"><button type="button" class="btn" id="m" aria-label="Una persona in meno">−</button><input id="ppl" type="number" min="1" max="100" value="2"><button type="button" class="btn" id="pl" aria-label="Una persona in più">+</button></div></div></div>
+      <label>Orario</label><div id="slots"></div>
+      <h3 class="sec" style="margin-top:34px"><span>3</span> Tavolo</h3>
+      <div class="tbox"><div class="tsum" id="tsum"></div><div class="row-actions"><button type="button" class="btn sm" id="tpick">Cambia o unisci i tavoli</button><button type="button" class="btn sm" id="tauto" hidden>Torna all'assegnazione automatica</button></div></div>
+      <h3 class="sec" style="margin-top:34px"><span>4</span> Note</h3>
+      <label for="notes">Allergie, compleanno, seggiolone…</label><textarea id="notes" rows="2"></textarea>
+      <label class="check" style="margin-top:20px"><input type="checkbox" id="mk"> Il cliente accetta di ricevere offerte ed eventi</label>
+      <div class="actions"><button class="btn main big" id="save">Salva la prenotazione</button></div>
+    </section>`;
+  flash = '';
+  const paintTables = async () => {
+    const box = $('#tsum'); $('#tauto').hidden = chosen === null;
+    if (chosen !== null) {
+      const ts = chosen.map(id => tables.find(t => t.id === id)).filter(Boolean);
+      box.innerHTML = ts.length ? `<b>${esc(names(ts))}</b> · ${seatsOf(ts)} posti${seatsOf(ts) < people() ? ` <span class="warnt">(non bastano per ${plural(people(), 'persona', 'persone')})</span>` : ''}` : 'Nessun tavolo: lo assegnerai dopo';
+      return;
+    }
+    auto = null;
+    if (!time) { box.textContent = 'Scegli prima l\'orario'; return; }
+    try {
+      const s = await api('GET', `/api/suggest?date=${date}&time=${time}&people=${people()}&area=${F.area}`);
+      auto = s.tables;
+      box.innerHTML = s.tables ? `Assegnazione automatica: <b>${esc(names(s.tables))}</b> · ${seatsOf(s.tables)} posti${s.tables.length > 1 ? ' (tavoli uniti)' : ''}` : '<span class="warnt">Nessun tavolo libero a quest\'ora. Puoi sceglierli a mano o salvare senza tavolo.</span>';
+    } catch (e) { box.textContent = e.message; }
+  };
+  const loadSlots = async () => {
+    date = $('#date').value;
+    try {
+      const s = await api('GET', `/api/slots?date=${date}&people=${people()}`);
+      if (!s.some(x => x.time === time && x.free)) time = '';
+      const grp = (t, a) => a.length ? `<div class="slotgrp"><div class="slotttl">${t}</div><div class="slots">${a.map(x => `<button type="button" data-t="${x.time}" class="${x.time === time ? 'on' : ''}" ${x.free ? '' : 'disabled'}>${x.time}</button>`).join('')}</div></div>` : '';
+      $('#slots').innerHTML = grp('Pranzo', s.filter(x => svcOf(x.time) === 'pranzo')) + grp('Cena', s.filter(x => svcOf(x.time) === 'cena')) || '<p class="lead">Nessun orario configurato.</p>';
+      document.querySelectorAll('#slots button').forEach(b => b.onclick = () => { time = b.dataset.t; loadSlots(); });
+    } catch (e) { $('#slots').innerHTML = msg(e.message); }
+    paintTables();
+  };
+  $('#m').onclick = () => { $('#ppl').value = Math.max(1, people() - 1); loadSlots(); };
+  $('#pl').onclick = () => { $('#ppl').value = people() + 1; loadSlots(); };
+  $('#ppl').onchange = $('#date').onchange = loadSlots;
+  $('#tpick').onclick = async () => {
+    if (!time) { $('#e').innerHTML = msg('Scegli prima l\'orario'); scrollTo(0, 0); return; }
+    try {
+      const ids = await tablePicker({date, time, people: people(), selected: chosen !== null ? chosen : (auto || []).map(t => t.id), title: 'Scegli o unisci i tavoli'});
+      if (ids) { chosen = ids; paintTables(); }
+    } catch (e) { $('#e').innerHTML = msg(e.message); scrollTo(0, 0); }
+  };
+  $('#tauto').onclick = () => { chosen = null; paintTables(); };
+  const lookup = async () => {
+    const p = $('#phone').value.replace(/[^\d+]/g, '');
+    if (p.length < 6) { $('#known').textContent = ''; return; }
+    try {
+      const c = await api('GET', '/api/customers/by-phone?phone=' + encodeURIComponent(p));
+      if (c) { if (!$('#name').value) $('#name').value = c.name; $('#mk').checked = !!c.marketing_ok; $('#known').textContent = '✓ Cliente già in archivio' + (c.notes ? ' — ' + c.notes : ''); }
+      else $('#known').textContent = 'Nuovo cliente';
+    } catch {}
+  };
+  let t; $('#phone').oninput = () => { clearTimeout(t); t = setTimeout(lookup, 400); };
+  const save = async force => {
+    if (!time) { $('#e').innerHTML = msg('Scegli un orario'); scrollTo(0, 0); return; }
+    const body = {name: $('#name').value, phone: $('#phone').value, date, time, people: people(), notes: $('#notes').value, marketing_ok: $('#mk').checked, force, area_id: F.area};
+    if (chosen !== null) body.table_ids = chosen;
+    try {
+      const r = await api('POST', '/api/reservations', body);
+      viewDate = date; F.svc = svcOf(time); F.turn = turnOf(time); F.q = ''; F.all = false;
+      if (r.tables.length) F.area = r.tables[0].area_id;
+      view = 'oggi'; flash = msg(`Prenotazione salvata · ${r.tables.length ? names(r.tables) : 'senza tavolo'}`, true); render();
+    } catch (e) {
+      if (e.canForce) { if ((await warnDialog(e.message)).ok) save(true); }
+      else { $('#e').innerHTML = msg(e.message); scrollTo(0, 0); }
+    }
+  };
+  $('#save').onclick = () => save(false);
+  loadSlots(); if (pf && pf.phone) lookup(); else $('#phone').focus();
+};
+
+/* ---------- Clienti ---------- */
+VIEWS.clienti = async function () {
+  $('#main').innerHTML = `<h2 class="ptitle">Clienti</h2>${flash}<label for="cq">Cerca per nome o telefono</label><input id="cq"><div id="list"></div>`;
+  flash = '';
+  const load = async () => {
+    const l = await api('GET', '/api/customers?q=' + encodeURIComponent($('#cq').value));
+    $('#list').innerHTML = l.length ? `<div class="book" style="margin-top:18px">${l.map(c => `<article class="res" style="grid-template-columns:1fr auto;align-items:center">
+      <div><div class="rname">${esc(c.name)}${c.marketing_ok ? '<span class="tag">offerte</span>' : ''}</div>
+        <div class="rmeta">${esc(c.phone)} · ${plural(c.visits, 'visita', 'visite')}${c.last_date ? ' · ultima prenotazione ' + fd(c.last_date) : ''}</div>
+        ${c.notes ? `<div class="rnote"><em>Note</em>${esc(c.notes)}</div>` : ''}</div>
+      <button class="btn sm" data-c="${c.id}">Apri la scheda</button></article>`).join('')}</div>` : '<div class="book" style="margin-top:18px"><div class="empty">Nessun cliente trovato.</div></div>';
+    document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => show(() => scheda(b.dataset.c)));
+  };
+  $('#cq').oninput = load; await load();
+};
+async function scheda(id) {
+  const c = await api('GET', '/api/customers/' + id);
+  $('#main').innerHTML = `<h2 class="ptitle">${esc(c.name)}</h2><div id="e"></div><section class="card">
+    <label for="n">Nome</label><input id="n" value="${esc(c.name)}"><label for="ph">Telefono</label><input id="ph" value="${esc(c.phone)}">
+    <label for="em">Email</label><input id="em" value="${esc(c.email)}"><label for="no">Note (allergie, preferenze, tavolo preferito)</label><textarea id="no" rows="3">${esc(c.notes)}</textarea>
+    <label class="check" style="margin-top:20px"><input type="checkbox" id="mk" ${c.marketing_ok ? 'checked' : ''}> Accetta di ricevere offerte ed eventi</label>
+    <div class="actions"><button class="btn main" id="sv">Salva le modifiche</button><button class="btn" id="np">Nuova prenotazione</button><button class="btn" id="bk">Torna ai clienti</button></div></section>
+    <div class="card"><h3 class="plain">Storico prenotazioni</h3>${c.reservations.length ? `<table><tr><th>Data</th><th>Ora</th><th>Persone</th><th>Stato</th><th>Note</th></tr>${c.reservations.map(r => `<tr><td>${fd(r.date)}</td><td>${r.time}</td><td>${r.people}</td><td>${STATUS[r.status]}</td><td>${esc(r.notes)}</td></tr>`).join('')}</table>` : '<p class="lead">Nessuna prenotazione.</p>'}</div>
+    ${c.feedback.length ? `<div class="card"><h3 class="plain">Opinioni lasciate</h3>${c.feedback.map(f => `<p>${stars(f.rating)} ${esc(f.comment)}</p>`).join('')}</div>` : ''}`;
+  $('#bk').onclick = () => refresh();
+  $('#np').onclick = () => { prefill = {phone: c.phone, name: c.name}; view = 'nuova'; render(); };
+  $('#sv').onclick = async () => {
+    try { await api('PUT', '/api/customers/' + id, {name: $('#n').value, phone: $('#ph').value, email: $('#em').value, notes: $('#no').value, marketing_ok: $('#mk').checked}); flash = msg('Scheda salvata', true); refresh(); }
+    catch (e) { $('#e').innerHTML = msg(e.message); }
+  };
+}
+
+/* ---------- Opinioni ---------- */
+VIEWS.feedback = async function () {
+  const f = await api('GET', '/api/feedback');
+  $('#main').innerHTML = `<h2 class="ptitle">Opinioni dei clienti</h2>
+    <div class="card avg">${f.avg.n ? `<b>${f.avg.a}</b>${stars(Math.round(f.avg.a))}<div class="lead">media su ${plural(f.avg.n, 'opinione', 'opinioni')}</div>` : '<div class="lead">Ancora nessuna opinione.</div>'}</div>
+    ${f.list.length ? `<div class="book">${f.list.map(x => `<article class="res"><div class="rname">${stars(x.rating)} <span class="pax">${esc(x.cname)} · ${when(x.created_at, DATE_FMT)}</span></div>${x.comment ? `<div class="rnote">${esc(x.comment)}</div>` : ''}</article>`).join('')}</div>`
+      : '<p class="lead">Dopo "Ha finito" il cliente riceve un link per lasciare il suo voto.</p>'}`;
+};
+
+/* ---------- Offerte ed eventi ---------- */
+VIEWS.offerte = async function () {
+  const [list, aud] = await Promise.all([api('GET', '/api/campaigns'), api('GET', '/api/campaigns/audience')]);
+  $('#main').innerHTML = `<h2 class="ptitle">Offerte &amp; Eventi</h2><p class="lead">${plural(aud.n, 'cliente ha accettato', 'clienti hanno accettato')} di ricevere i vostri messaggi</p>${flash}
+    ${me.role === 'admin' ? `<section class="card"><div id="e"></div>
+      <label for="k">Tipo</label><select id="k"><option value="offerta">Offerta</option><option value="evento">Evento</option></select>
+      <label for="t">Titolo</label><input id="t" placeholder="Es. Serata del pesce">
+      <label for="d">Data dell'evento (facoltativa)</label><input id="d" type="date">
+      <label for="m">Messaggio</label><textarea id="m" rows="3"></textarea>
+      <div class="actions"><button class="btn main big" id="snd">Invia ai clienti iscritti</button></div></section>` : '<p class="lead">Solo il titolare può inviare messaggi ai clienti.</p>'}
+    <div class="card"><h3 class="plain">Già inviati</h3>${list.length ? list.map(c => `<div class="urow" style="display:block"><b>${esc(c.title)}</b><span class="tag">${c.kind}</span> <span class="rmeta">${when(c.created_at, DATE_FMT)} · ${plural(c.recipients, 'messaggio', 'messaggi')}</span><div>${esc(c.message)}</div></div>`).join('') : '<p class="lead">Nessun invio per ora.</p>'}</div>`;
+  flash = '';
+  if ($('#snd')) $('#snd').onclick = async () => {
+    const q = await modal({title: 'Inviare il messaggio?', body: `<p>Verrà inviato a ${plural(aud.n, 'cliente iscritto', 'clienti iscritti')}.</p>`, ok: 'Sì, invia', cancel: 'No'});
+    if (!q.ok) return;
+    try { const r = await api('POST', '/api/campaigns', {kind: $('#k').value, title: $('#t').value, message: $('#m').value, event_date: $('#d').value}); flash = msg(`Messaggi messi in coda: ${r.messages}`, true); refresh(); }
+    catch (e) { $('#e').innerHTML = msg(e.message); }
+  };
+};
+
+/* ---------- Messaggi ---------- */
+VIEWS.messaggi = async function () {
+  const l = await api('GET', '/api/outbox');
+  const ST = {in_coda: 'In coda', inviato: 'Inviato', errore: 'Errore'};
+  $('#main').innerHTML = `<h2 class="ptitle">Messaggi</h2><p class="lead">I messaggi "in coda" partono solo dopo aver collegato il servizio SMS/email (vedi README).</p>
+    <div class="card">${l.length ? `<table><tr><th>Quando</th><th>Canale</th><th>A</th><th>Testo</th><th>Stato</th></tr>${l.map(m => `<tr><td>${when(m.created_at, {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}</td><td>${m.channel === 'sms' ? 'SMS' : 'Email'}</td><td>${esc(m.to_addr)}</td><td>${esc(m.body)}</td><td>${ST[m.status] || m.status}${m.error ? ' · ' + esc(m.error) : ''}</td></tr>`).join('')}</table>` : '<p class="lead">Nessun messaggio.</p>'}</div>`;
+};
+
+/* ---------- Impostazioni (titolare) ---------- */
+VIEWS.impostazioni = async function () {
+  const [s, tables, areas, users] = await Promise.all([api('GET', '/api/settings'), api('GET', '/api/tables'), api('GET', '/api/areas'), api('GET', '/api/users')]);
+  const areaOpts = sel => areas.map(a => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${esc(a.name)}</option>`).join('');
+  $('#main').innerHTML = `<h2 class="ptitle">Impostazioni</h2>${flash}<div id="e"></div>
+    <section class="card"><h3 class="plain">Il ristorante</h3>
+      <label for="s_restaurant_name">Nome</label><input id="s_restaurant_name" value="${esc(s.restaurant_name)}">
+      <label for="s_slots">Orari di servizio</label><input id="s_slots" value="${esc(s.slots)}"><span class="help">Esempio: 12:00-14:00,19:00-22:00 (pranzo e cena)</span>
+      <div class="grid2"><div><label for="s_step_min">Un orario ogni (minuti)</label><input id="s_step_min" type="number" value="${esc(s.step_min)}"></div>
+        <div><label for="s_duration_min">Durata di un tavolo (minuti)</label><input id="s_duration_min" type="number" value="${esc(s.duration_min)}"></div></div>
+      <h4 class="sub">Servizi e turni</h4>
+      <div class="grid2"><div><label for="s_service_split">La cena inizia alle</label><input id="s_service_split" value="${esc(s.service_split)}"><span class="help">Prima di quest'ora è pranzo</span></div>
+        <div><label for="s_late_min">Ritardo dopo (minuti)</label><input id="s_late_min" type="number" value="${esc(s.late_min)}"><span class="help">Dopo quanti minuti una prenotazione risulta "in ritardo"</span></div>
+        <div><label for="s_turn2_pranzo">2° turno a pranzo dalle</label><input id="s_turn2_pranzo" value="${esc(s.turn2_pranzo)}"><span class="help">Lascia vuoto se a pranzo c'è un solo turno</span></div>
+        <div><label for="s_turn2_cena">2° turno a cena dalle</label><input id="s_turn2_cena" value="${esc(s.turn2_cena)}"><span class="help">Lascia vuoto se a cena c'è un solo turno</span></div></div>
+      <h4 class="sub">Avvisi</h4>
+      <label for="s_notify_phone">Telefono per l'avviso di nuove prenotazioni</label><input id="s_notify_phone" value="${esc(s.notify_phone)}"><span class="help">Con il prefisso, ad esempio +39333…</span>
+      <label for="s_notify_email">Email per l'avviso di nuove prenotazioni</label><input id="s_notify_email" value="${esc(s.notify_email)}">
+      <label for="s_base_url">Indirizzo del sito</label><input id="s_base_url" value="${esc(s.base_url)}"><span class="help">Serve per il link con cui il cliente lascia il voto</span>
+      <label class="check" style="margin-top:20px"><input type="checkbox" id="s_confirm_customer" ${s.confirm_customer === '1' ? 'checked' : ''}> Manda la conferma di prenotazione al cliente</label>
+      <div class="actions"><button class="btn main" id="ss">Salva</button></div></section>
+    <section class="card"><h3 class="plain">Aree della sala</h3><p class="muted small">Ad esempio Sala, Piazzetta, Veranda. Ogni tavolo appartiene a un'area.</p>
+      ${areas.map(a => `<div class="urow"><input data-an="${a.id}" value="${esc(a.name)}" aria-label="Nome area" style="flex:1 1 180px;max-width:320px"><span class="muted small">${plural(a.tables, 'tavolo', 'tavoli')}</span>
+        <span style="display:flex;gap:8px"><button class="btn sm" data-asave="${a.id}">Salva</button><button class="btn sm danger" data-adel="${a.id}">Elimina</button></span></div>`).join('')}
+      <h4 class="sub">Nuova area</h4><div class="urow" style="border:0"><input id="an" placeholder="Nome dell'area" style="flex:1 1 180px;max-width:320px"><button class="btn sm" id="aadd">Aggiungi</button></div></section>
+    <section class="card"><h3 class="plain">Tavoli</h3>
+      ${areas.map(a => `<h4 class="sub">${esc(a.name)}</h4>${tables.filter(t => t.area_id === a.id).map(t => `<div class="trow"><input data-tn="${t.id}" value="${esc(t.name)}" aria-label="Nome tavolo"><input data-ts="${t.id}" type="number" min="1" value="${t.seats}" aria-label="Posti">
+        <select data-tar="${t.id}" aria-label="Area">${areaOpts(t.area_id)}</select><label class="check" style="margin:0"><input type="checkbox" data-ta="${t.id}" ${t.active ? 'checked' : ''}> in uso</label><button class="btn sm" data-tsave="${t.id}">Salva</button></div>`).join('') || '<p class="muted small">Nessun tavolo.</p>'}`).join('')}
+      <h4 class="sub">Aggiungi tavoli</h4><p class="muted small">Puoi aggiungerne anche molti insieme: vengono numerati di seguito (Tavolo 9, Tavolo 10…).</p>
+      <div class="grid2"><div><label for="bk_area">Area</label><select id="bk_area">${areaOpts(F.area)}</select></div><div><label for="bk_prefix">Nome</label><input id="bk_prefix" value="Tavolo"></div>
+        <div><label for="bk_qty">Quanti tavoli</label><input id="bk_qty" type="number" min="1" value="1"></div><div><label for="bk_seats">Posti per tavolo</label><input id="bk_seats" type="number" min="1" value="4"></div></div>
+      <div class="actions"><button class="btn" id="tadd">Aggiungi i tavoli</button></div></section>
+    <section class="card"><h3 class="plain">Dipendenti</h3>${users.map(u => `<div class="urow"><span><b>${esc(u.name)}</b> <span class="rmeta">(${esc(u.username)} · ${u.role === 'admin' ? 'titolare' : 'dipendente'})</span>${u.active ? '' : '<span class="tag">disattivato</span>'}</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-pw="${u.id}">Nuova password</button><button class="btn sm" data-act2="${u.id}" data-to="${u.active ? 0 : 1}">${u.active ? 'Disattiva' : 'Riattiva'}</button></span></div>`).join('')}
+      <h4 class="sub">Nuovo dipendente</h4>
+      <div class="grid2"><div><label for="nu">Nome utente</label><input id="nu" autocapitalize="off"></div><div><label for="nn">Nome</label><input id="nn"></div>
+        <div><label for="np">Password (almeno 6 caratteri)</label><input id="np"></div><div><label for="nr">Ruolo</label><select id="nr"><option value="staff">Dipendente</option><option value="admin">Titolare</option></select></div></div>
+      <div class="actions"><button class="btn" id="uadd">Crea il dipendente</button></div></section>
+    <section class="card"><h3 class="plain">La mia password</h3><div class="grid2"><div><label for="po">Password attuale</label><input id="po" type="password"></div><div><label for="pn">Nuova password</label><input id="pn" type="password"></div></div>
+      <div class="actions"><button class="btn" id="pc">Cambia la password</button></div></section>`;
+  flash = '';
+  const run = async fn => { try { await fn(); refresh(); } catch (e) { $('#e').innerHTML = msg(e.message); scrollTo(0, 0); } };
+  $('#ss').onclick = () => run(async () => {
+    const b = {}; document.querySelectorAll('[id^=s_]').forEach(i => b[i.id.slice(2)] = i.type === 'checkbox' ? (i.checked ? '1' : '0') : i.value);
+    await api('PUT', '/api/settings', b);
+    const today = me.today; me = await api('GET', '/api/me'); me.today = today; // aggiorna nome e turni
+    document.querySelector('.brand').textContent = me.restaurant; document.title = me.restaurant + ' · Prenotazioni'; flash = msg('Impostazioni salvate', true);
+  });
+  document.querySelectorAll('[data-asave]').forEach(b => b.onclick = () => run(async () => { await api('PUT', '/api/areas/' + b.dataset.asave, {name: $(`[data-an="${b.dataset.asave}"]`).value}); flash = msg('Area salvata', true); }));
+  document.querySelectorAll('[data-adel]').forEach(b => b.onclick = () => run(async () => {
+    const q = await modal({title: 'Eliminare l\'area?', body: '<p>L\'area deve essere vuota: sposta prima i suoi tavoli.</p>', ok: 'Elimina', cancel: 'No'});
+    if (q.ok) { await api('DELETE', '/api/areas/' + b.dataset.adel); flash = msg('Area eliminata', true); }
+  }));
+  $('#aadd').onclick = () => run(async () => { await api('POST', '/api/areas', {name: $('#an').value}); flash = msg('Area aggiunta', true); });
+  document.querySelectorAll('[data-tsave]').forEach(b => b.onclick = () => run(async () => { const i = b.dataset.tsave;
+    await api('PUT', '/api/tables/' + i, {name: $(`[data-tn="${i}"]`).value, seats: $(`[data-ts="${i}"]`).value, area_id: $(`[data-tar="${i}"]`).value, active: $(`[data-ta="${i}"]`).checked}); flash = msg('Tavolo salvato', true); }));
+  $('#tadd').onclick = () => run(async () => { const r = await api('POST', '/api/tables/bulk', {area_id: $('#bk_area').value, prefix: $('#bk_prefix').value, count: $('#bk_qty').value, seats: $('#bk_seats').value}); flash = msg(plural(r.added, 'tavolo aggiunto', 'tavoli aggiunti'), true); });
+  $('#uadd').onclick = () => run(async () => { await api('POST', '/api/users', {username: $('#nu').value, name: $('#nn').value, password: $('#np').value, role: $('#nr').value}); flash = msg('Dipendente creato', true); });
+  document.querySelectorAll('[data-pw]').forEach(b => b.onclick = () => run(async () => {
+    const q = await modal({title: 'Nuova password', body: '<label for="mp">Almeno 6 caratteri</label><input id="mp" type="text" autocomplete="off">', ok: 'Salva', cancel: 'Annulla', validate: d => d.querySelector('#mp').value.length >= 6 ? '' : 'Servono almeno 6 caratteri'});
+    if (q.ok) { await api('PUT', '/api/users/' + b.dataset.pw, {password: q.el.querySelector('#mp').value}); flash = msg('Password cambiata', true); }
+  }));
+  document.querySelectorAll('[data-act2]').forEach(b => b.onclick = () => run(async () => { await api('PUT', '/api/users/' + b.dataset.act2, {active: b.dataset.to === '1'}); flash = ''; }));
+  $('#pc').onclick = () => run(async () => { await api('POST', '/api/password', {old: $('#po').value, new: $('#pn').value}); flash = msg('Password cambiata', true); });
+};
+
+/* ---------- Avviso di nuova prenotazione ---------- */
+async function poll() {
+  if (!me) { lastMax = null; return; }
+  try {
+    const p = await api('GET', '/api/poll?after=' + (lastMax ?? 0));
+    if (lastMax !== null && p.fresh.length) {
+      const r = p.fresh[p.fresh.length - 1], a = $('#alert');
+      a.innerHTML = `<b>Nuova prenotazione</b>${esc(r.cname)} · ${plural(r.people, 'persona', 'persone')} · ${fd(r.date)} alle ${r.time}`;
+      a.style.display = 'block';
+      a.onclick = () => { a.style.display = 'none'; viewDate = r.date; view = 'oggi'; F.svc = svcOf(r.time); F.turn = turnOf(r.time); F.q = ''; render(); };
+      try { const c = new AudioContext(), o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 660; o.connect(c.destination); o.start(); o.stop(c.currentTime + 0.35); } catch {}
+      if (view === 'oggi' && !document.querySelector('dialog[open]')) refresh();
+    }
+    lastMax = p.max;
+  } catch {}
+}
+
+if (!/^https?:$/.test(location.protocol)) { // aperta come semplice file: senza il sistema dietro non può funzionare
+  document.body.innerHTML = `<div class="login"><header class="mast"><div class="rule"><i></i></div><h1>Prenotazioni</h1></header>
+    <section class="card"><h3 class="plain">Questa pagina va aperta dall'indirizzo del sistema</h3>
+    <p>Il file da solo non può collegarsi ai dati. Usa il pulsante qui sotto.</p>
+    <div class="actions"><a class="btn main big" href="http://localhost:3000" target="_blank" rel="noopener">Apri il sistema</a></div>
+    <p class="help">Se non si apre, fai doppio clic su <b>avvia.bat</b> nella cartella del sistema e riprova.</p></section></div>`;
+} else {
+  setInterval(poll, 10000);
+  setInterval(() => { if (me && view === 'oggi' && DAY && !document.querySelector('dialog[open]')) paint(); }, 60000); // aggiorna i ritardi senza ricaricare
+  boot().then(poll);
+}
+</script>
+</body>
+</html>

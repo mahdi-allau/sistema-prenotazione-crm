@@ -1,0 +1,7 @@
+# runtime data: the real database, daily backups and the first-access password
+data/
+
+node_modules/
+*.log
+.DS_Store
+.claude/settings.local.json
